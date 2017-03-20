@@ -2,10 +2,49 @@
 
 // var AWS = require('aws-sdk');  this should be used in prod
 var Alexa = require('alexa-sdk');
-// var nutritionixAPI = require('./nutritionixAPI');
+var nutritionixAPI = require('./nutritionixAPI');
 
 var APP_ID = undefined;
 var SKILL_NAME = 'ms_nutrition';
+
+    //Cleaning up the results from the API call and retrieving an especific or multiple nutritional facts
+function getSpecificFact(nFact, nutritionalFacts){
+    var response = "";
+    for(var key in nutritionalFacts){
+        if(key.indexOf(nFact) > -1) // if the current index of the nutritional facts data contains the required value then...
+        {
+            var tempKey = key.replace(/nf_/ig, '');
+            tempKey = tempKey.replace(/_/ig,' ')
+            console.log(`KEY: ${tempKey}`);
+            console.log(`WORD: ${nFact}`);
+            if(nutritionalFacts[key] == null) {
+                response += 0;
+            }
+            else{
+                response += nutritionalFacts[key];
+            }
+            if(tempKey.indexOf("calories") > -1){
+                response += ` ${tempKey}, `;
+            }
+            else if(tempKey.indexOf("cholesterol") > -1 || tempKey.indexOf("sodium") > -1){
+                response += `mg ${tempKey}, `;
+            }
+            else { response += `g of ${tempKey}, `}
+        }
+    }
+    response = response.substring(0, response.length-2);
+    console.log(`Requested nutritional Fact is = ${response}`);
+    var tempIndex = response.lastIndexOf(',');
+    if(tempIndex > 0){
+        var finalResponse = `${response.slice(0, tempIndex + 1)} and ${response.slice(tempIndex + 1)}`;
+        return finalResponse;
+    }
+    else{
+        return response;
+    }
+}
+
+
 
 
 var WELCOME_MESSAGE = `Welcome to Skye's Nutrition!  You can ask me about information regarding to various types of food, 
@@ -46,14 +85,27 @@ var startHandlers = Alexa.CreateStateHandler(states.START,{
         this.emit(":ask", WELCOME_MESSAGE, HELP_MESSAGE);
     },
     "GetNutritionIntent": function(){
-        var item = this.event.request.intent.slots; // Getting slots array from intent??
-        
-        console.log(`The things inside the slots for nutrition are ${item}`);
-        this.emit(":tell", "This is a test");
+        var item = this.event.request.intent.slots; // Getting slots array from intent??  
+        console.log(`The things inside the slots for nutrition are ${JSON.stringify(item, null, 4)}`);
+
+        var nFact = item.NFacts.value;
+        console.log(`Requested nutritial fact is ${nFact}`);
+        var tFood = item.Food.value;
+        console.log(`Requested nutritial fact is ${tFood}`);
+
+        var nutritionixTemp = nutritionixAPI.NutritionixAPI.getInfo(tFood);
+        nutritionixTemp.then(value => JSON.parse(value))
+        .then(currentInfo => {
+                //Saving nutritional facts from returned info
+            var nutritionalFacts = currentInfo.hits[0].fields;
+            console.log(`Here are all the nutritional Facts ${JSON.stringify(nutritionalFacts,null,4)}`);
+             this.emit(":tell", `A ${tFood} contains at least ${getSpecificFact(nFact, nutritionalFacts)}`);
+        })
+        // this.emit(":tell", "This is a test");
         
     },
     "GetFoodInfoIntent": function(){
-        var item = this.event.request.intent.slots; // Getting slots array from intent??
+        var item = JSON.stringify(this.event.request.intent.slots, null, 4); // Getting slots array from intent??
         
         console.log(`The things inside the slots for food info are ${item}`);
         this.emit(":tell", "This is a test");
