@@ -2,7 +2,7 @@
 
 // var AWS = require('aws-sdk');  this should be used in prod
 var Alexa = require('alexa-sdk');
-var nutritionixAPI = require('./nutritionixAPI');
+// var nutritionixAPI = require('./nutritionixAPI');
 
 var APP_ID = undefined;
 var SKILL_NAME = 'ms_nutrition';
@@ -41,19 +41,19 @@ const handlers = {
     }   
 }
 
-var startHandlers = Alexa.CreateStateHangler(states.START,{
+var startHandlers = Alexa.CreateStateHandler(states.START,{
     "Start": function () {
         this.emit(":ask", WELCOME_MESSAGE, HELP_MESSAGE);
     },
     "GetNutritionIntent": function(){
-        var item = getItem(this.event.request.intent.slots); // Getting slots array from intent??
+        var item = this.event.request.intent.slots; // Getting slots array from intent??
         
         console.log(`The things inside the slots for nutrition are ${item}`);
         this.emit(":tell", "This is a test");
         
     },
     "GetFoodInfoIntent": function(){
-        var item = getItem(this.event.request.intent.slots); // Getting slots array from intent??
+        var item = this.event.request.intent.slots; // Getting slots array from intent??
         
         console.log(`The things inside the slots for food info are ${item}`);
         this.emit(":tell", "This is a test");
@@ -78,6 +78,6 @@ var startHandlers = Alexa.CreateStateHangler(states.START,{
 exports.handler = (event, context) => {
     var alexa = Alexa.handler(event, context);
     alexa.APP_ID = APP_ID;
-    alexa.registerHandlers(handlers, startHandlers, nutritionHandlers);
+    alexa.registerHandlers(handlers, startHandlers);
     alexa.execute();
 };
