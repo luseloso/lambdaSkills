@@ -43,10 +43,13 @@ function getSpecificFact(nFact, nutritionalFacts){
 
 function processEvent(event, context, callback) {
 
+
+    console.log(`incoming event: ${JSON.stringify(event,null,4)}`);
     if (typeof event.Records !== 'undefined') {
         try {
             console.log("Incoming message was JSON");
             var o = JSON.parse(event.Records[0].Sns.Message);
+            console.log(JSON.stringify(o,null,4));
             var intent = o.intent;
             var slots = o.slots;
             
@@ -68,7 +71,7 @@ function processEvent(event, context, callback) {
         } 
         catch (e) {	
             console.log("Incoming message was not JSON");
-            var message = event.Records[0].Sns.Message;
+            callback(null, "There was an error");
         }
     }       
 }
