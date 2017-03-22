@@ -49,29 +49,51 @@ function processEvent(event, context, callback) {
         try {
             console.log("Incoming message was JSON");
             var o = JSON.parse(event.Records[0].Sns.Message);
-            console.log(JSON.stringify(o,null,4));
+            // console.log(JSON.stringify(o,null,4));
             var intent = o.intent;
             var slots = o.slots;
-            
-            
-            var nFact = slots.NFacts.value;
-            console.log(`Requested nutritial fact is ${nFact}`);
-            var tFood = slots.Food.value;
-            console.log(`Requested nutritial fact is ${tFood}`);
+            var response;
+            switch(intent){
+                case 'GetNutritionIntent':
+                    var nFact = slots.NFacts.value;
+                    console.log(`Requested nutritial fact is ${nFact}`);
+                    var tFood = slots.Food.value;
+                    console.log(`Requested nutritial fact is ${tFood}`);
 
-            var nutritionixTemp = nutritionixAPI.NutritionixAPI.getInfo(tFood);
-            nutritionixTemp.then(value => JSON.parse(value))
-            .then(currentInfo => {
-                    //Saving nutritional facts from returned info
-                var nutritionalFacts = currentInfo.hits[0].fields;
-                console.log(`Here are all the nutritional Facts ${JSON.stringify(nutritionalFacts,null,4)}`);
-                var response = `A ${tFood} contains at least ${getSpecificFact(nFact, nutritionalFacts)}`;
-                callback(null, response);
-            })
+                    var nutritionixTemp = nutritionixAPI.NutritionixAPI.getInfo(tFood);
+                    nutritionixTemp.then(value => JSON.parse(value))
+                    .then(currentInfo => {
+                            //Saving nutritional facts from returned info
+                        var nutritionalFacts = currentInfo.hits[0].fields;
+                        console.log(`Here are all the nutritional Facts ${JSON.stringify(nutritionalFacts,null,4)}`);
+                        response = `A ${tFood} contains at least ${getSpecificFact(nFact, nutritionalFacts)}`;
+                        callback(null, response);
+                    });
+                    break;
+                case 'GetFoodIntent':
+                    var tFood = slots.Food.value;
+                    console.log(`Requested nutritial fact is ${tFood}`);
+
+                    var nutritionixTemp = nutritionixAPI.NutritionixAPI.getInfo(tFood);
+                    nutritionixTemp.then(value => JSON.parse(value))
+                    .then(currentInfo => {
+                            //Saving nutritional facts from returned info
+                        var nutritionalFacts = currentInfo.hits[0].fields;
+                        console.log(`Here are all the nutritional Facts ${JSON.stringify(nutritionalFacts,null,4)}`);
+                        response = `A ${tFood} contains at least ${getSpecificFact('fat', nutritionalFacts)}`;
+                        callback(null, response);
+                    });
+                    break;
+                default:
+                    response = "The intent was not handled correctly";
+                    callback(null, response);
+                    break;
+            }
         } 
         catch (e) {	
             console.log("Incoming message was not JSON");
-            callback(null, "There was an error");
+            console.log(e);
+            callback(null, "There was an error: " + e + " " + JSON.stringify(event,null,4) );
         }
     }       
 }
